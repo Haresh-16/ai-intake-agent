@@ -1,0 +1,928 @@
+================================================================================
+AI INTAKE V1 - CONSOLIDATED CODEBASE
+================================================================================
+
+================================================================================
+FILE: pyproject.toml
+================================================================================
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-intake-v1"
+version = "0.1.0"
+description = "Supervised AI Intake Agent V1 scaffold"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.30.0",
+  "sqlalchemy>=2.0.32",
+  "aiosqlite>=0.20.0",
+  "pydantic>=2.8.2",
+  "pydantic-settings>=2.4.0",
+  "python-multipart>=0.0.9",
+  "pytest>=8.3.2",
+  "httpx>=0.27.0"
+]
+
+[tool.setuptools]
+packages = ["app", "app.api", "app.services"]
+
+================================================================================
+FILE: app/main.py
+================================================================================
+from pathlib import Path
+from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from app.api.routes_followups import router as followup_router
+from app.api.routes_health import router as health_router
+from app.api.routes_intake import router as intake_router
+from app.api.routes_review import router as review_router
+from app.config import settings
+from app.db import Base, engine
+app = FastAPI(title=settings.app_name)
+
+app.include_router(health_router)
+app.include_router(intake_router)
+app.include_router(review_router)
+app.include_router(followup_router)
+
+
+@app.on_event("startup")
+async def on_startup() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+
+@app.get("/dashboard", include_in_schema=False)
+async def dashboard() -> FileResponse:
+    return FileResponse(Path(__file__).resolve().parent / "static" / "dashboard.html")
+
+================================================================================
+FILE: app/models.py
+================================================================================
+from __future__ import annotations
+
+from datetime import datetime
+from uuid import uuid4
+
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.db import Base
+
+
+def _uuid() -> str:
+    return str(uuid4())
+
+
+def _utcnow() -> datetime:
+    return datetime.utcnow()
+
+
+class Prospect(Base):
+    __tablename__ = "prospects"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    external_ids: Mapped[dict] = mapped_column(JSON, default=dict)
+    first_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    state: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    source_channel: Mapped[str] = mapped_column(String(50), default="ghl_chat")
+    consent_status: Mapped[str] = mapped_column(String(30), default="pending")
+    status: Mapped[str] = mapped_column(String(30), default="new")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+    conversations: Mapped[list[Conversation]] = relationship(back_populates="prospect")
+
+
+class Conversation(Base):
+    __tablename__ = "conversations"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    prospect_id: Mapped[str] = mapped_column(ForeignKey("prospects.id"))
+    channel: Mapped[str] = mapped_column(String(50), default="ghl_chat")
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default="active")
+    agent_version: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+    prospect: Mapped[Prospect] = relationship(back_populates="conversations")
+    messages: Mapped[list[Message]] = relationship(back_populates="conversation", cascade="all, delete-orphan")
+    summaries: Mapped[list[IntakeSummaryRecord]] = relationship(back_populates="conversation", cascade="all, delete-orphan")
+    follow_ups: Mapped[list[FollowUpTask]] = relationship(back_populates="conversation", cascade="all, delete-orphan")
+
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    conversation_id: Mapped[str] = mapped_column(ForeignKey("conversations.id"))
+    role: Mapped[str] = mapped_column(String(30))
+    content: Mapped[str] = mapped_column(Text)
+    tool_calls: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    model_metadata: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+
+    conversation: Mapped[Conversation] = relationship(back_populates="messages")
+
+
+class IntakeSummaryRecord(Base):
+    __tablename__ = "intake_summaries"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    conversation_id: Mapped[str] = mapped_column(ForeignKey("conversations.id"))
+    primary_practice_area: Mapped[str] = mapped_column(String(40))
+    primary_confidence: Mapped[str] = mapped_column(String(10))
+    secondary_practice_areas: Mapped[list] = mapped_column(JSON, default=list)
+    fact_pattern: Mapped[str] = mapped_column(Text)
+    defendants: Mapped[list] = mapped_column(JSON, default=list)
+    evidence_collected: Mapped[list] = mapped_column(JSON, default=list)
+    evidence_requested: Mapped[list] = mapped_column(JSON, default=list)
+    evidence_missing: Mapped[list] = mapped_column(JSON, default=list)
+    cross_practice_flag: Mapped[bool] = mapped_column(Boolean, default=False)
+    follow_up_question: Mapped[str] = mapped_column(Text)
+    agent_recommendation: Mapped[str] = mapped_column(String(50))
+    review_status: Mapped[str] = mapped_column(String(30), default="pending")
+    reviewer_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    final_disposition: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    compliance_check: Mapped[dict] = mapped_column(JSON, default=dict)
+    agent_version: Mapped[str] = mapped_column(String(200))
+    raw_summary_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+    conversation: Mapped[Conversation] = relationship(back_populates="summaries")
+
+
+class LLMCallRecord(Base):
+    __tablename__ = "llm_call_records"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    conversation_id: Mapped[str | None] = mapped_column(ForeignKey("conversations.id"), nullable=True)
+    message_id: Mapped[str | None] = mapped_column(ForeignKey("messages.id"), nullable=True)
+    intake_summary_id: Mapped[str | None] = mapped_column(ForeignKey("intake_summaries.id"), nullable=True)
+    provider: Mapped[str] = mapped_column(String, nullable=False)
+    model_id: Mapped[str] = mapped_column(String, nullable=False)
+    operation: Mapped[str] = mapped_column(String, nullable=False)
+    prompt_version: Mapped[str] = mapped_column(String, nullable=False)
+    prompt_hash: Mapped[str] = mapped_column(String, nullable=False)
+    request_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    response_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    raw_response_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+
+
+class FollowUpTask(Base):
+    __tablename__ = "follow_up_tasks"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    conversation_id: Mapped[str] = mapped_column(ForeignKey("conversations.id"))
+    template_id: Mapped[str] = mapped_column(String(100))
+    template_version: Mapped[str] = mapped_column(String(30), default="v1")
+    attempt_number: Mapped[int] = mapped_column(Integer)
+    due_at: Mapped[datetime] = mapped_column(DateTime)
+    channel: Mapped[str] = mapped_column(String(30), default="sms")
+    payload: Mapped[dict] = mapped_column(JSON, default=dict)
+    status: Mapped[str] = mapped_column(String(30), default="scheduled")
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    stop_reason: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+
+    conversation: Mapped[Conversation] = relationship(back_populates="follow_ups")
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_log"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    actor: Mapped[str] = mapped_column(String(100))
+    action: Mapped[str] = mapped_column(String(100))
+    entity_type: Mapped[str] = mapped_column(String(100))
+    entity_id: Mapped[str] = mapped_column(String(100))
+    before_state: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    after_state: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+    ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+================================================================================
+FILE: app/schemas.py
+================================================================================
+from __future__ import annotations
+
+from datetime import datetime
+from enum import Enum
+from typing import Any, Literal
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+class PracticeArea(str, Enum):
+    TCPA = "TCPA"
+    FCRA = "FCRA"
+    FDCPA = "FDCPA"
+    MASS_ARB = "MASS_ARB"
+    UNKNOWN_CONSUMER = "UNKNOWN_CONSUMER"
+    WRONG_FIT = "WRONG_FIT"
+
+
+class AgentRecommendation(str, Enum):
+    ROUTE_TO_ATTORNEY = "route_to_attorney"
+    ROUTE_TO_INTAKE_REVIEW = "route_to_intake_review"
+    REQUEST_MORE_EVIDENCE = "request_more_evidence"
+    WRONG_FIT_CLOSE = "wrong_fit_close"
+
+
+class DefendantRole(str, Enum):
+    CALLER = "caller"
+    COLLECTOR = "collector"
+    FURNISHER = "furnisher"
+    BUREAU = "bureau"
+    OTHER = "other"
+
+
+class SecondaryPracticeArea(BaseModel):
+    area: str
+    confidence: float = Field(ge=0.0, le=1.0)
+    reason: str
+    source: Literal["rule_based", "llm_inferred"] = "rule_based"
+
+
+class Defendant(BaseModel):
+    name: str
+    role: DefendantRole
+    pattern_bank_hit: bool = False
+
+
+class ComplianceCheck(BaseModel):
+    no_legal_advice_given: bool
+    no_outcome_promised: bool
+    no_acr_implied: bool
+    disclosure_logged: bool
+
+
+class ProspectInput(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    state: str | None = None
+    source_channel: str = "web_form"
+    consent_status: str = "pending"
+    external_ids: dict[str, str] = Field(default_factory=dict)
+
+
+class IntakeSummary(BaseModel):
+    conversation_id: str
+    prospect: ProspectInput
+    primary_practice_area: PracticeArea
+    primary_confidence: float = Field(ge=0.0, le=1.0)
+    secondary_practice_areas: list[SecondaryPracticeArea] = Field(default_factory=list)
+    fact_pattern: str = Field(min_length=20, max_length=2000)
+    defendants: list[Defendant] = Field(default_factory=list)
+    evidence_collected: list[str] = Field(default_factory=list)
+    evidence_requested: list[str] = Field(default_factory=list)
+    evidence_missing: list[str] = Field(default_factory=list)
+    cross_practice_flag: bool
+    follow_up_question: str
+    agent_recommendation: AgentRecommendation
+    compliance_check: ComplianceCheck
+    agent_version: str
+    llm_request_metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("fact_pattern")
+    @classmethod
+    def validate_fact_pattern(cls, value: str) -> str:
+        compact = " ".join(value.split())
+        if len(compact.split()) < 12:
+            raise ValueError("fact_pattern must be sufficiently descriptive")
+        return compact
+
+    @field_validator("evidence_missing")
+    @classmethod
+    def validate_missing_subset(cls, value: list[str], info):
+        requested = set(info.data.get("evidence_requested", []))
+        if not set(value).issubset(requested):
+            raise ValueError("evidence_missing must be subset of evidence_requested")
+        return value
+
+
+class MessageCreate(BaseModel):
+    conversation_id: str | None = None
+    prospect: ProspectInput
+    role: Literal["prospect", "agent", "reviewer", "system"]
+    content: str
+
+
+class APIMessageResponse(BaseModel):
+    conversation_id: str
+    sanitized_content: str
+    suggested_next_prompt: str
+    current_stage: str
+
+
+class ConversationDetail(BaseModel):
+    id: str
+    status: str
+    channel: str
+    started_at: datetime
+    messages: list[dict]
+    summary: dict | None = None
+
+
+class ReviewAction(BaseModel):
+    review_status: Literal["approved", "modified", "rejected"]
+    reviewer_id: str
+    reviewer_note: str | None = None
+    final_disposition: str | None = None
+
+
+class FollowUpTaskView(BaseModel):
+    id: str
+    conversation_id: str
+    due_at: datetime
+    status: str
+    sequence_number: int
+    evidence_items: list[str]
+    template_version: str
+
+
+class LLMClassificationResult(BaseModel):
+    primary_practice_area: PracticeArea
+    primary_confidence: float = Field(ge=0.0, le=1.0)
+    reasoning: str = Field(min_length=8, max_length=500)
+
+
+class LLMEvidenceResult(BaseModel):
+    evidence_requested: list[str] = Field(min_length=1)
+    follow_up_question: str = Field(min_length=10, max_length=300)
+
+
+class LLMStructuredSummary(BaseModel):
+    primary_practice_area: PracticeArea
+    primary_confidence: float = Field(ge=0.0, le=1.0)
+    fact_pattern: str = Field(min_length=20, max_length=2000)
+    follow_up_question: str = Field(min_length=10, max_length=300)
+    agent_recommendation: AgentRecommendation
+
+
+class LLMRequestMetadata(BaseModel):
+    provider: str
+    model_id: str
+    operation: str
+    prompt_version: str
+    prompt_hash: str
+    request_id: str
+    stubbed: bool = False
+    temperature: float = 0.0
+    prompt_tokens_estimate: int | None = None
+    completion_tokens_estimate: int | None = None
+    raw_response_preview: str | None = None
+
+    model_config = ConfigDict(extra="allow")
+
+================================================================================
+FILE: app/api/routes_intake.py
+================================================================================
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db import get_session
+from app.models import Conversation, IntakeSummaryRecord, Message, Prospect
+from app.schemas import APIMessageResponse, ConversationDetail, MessageCreate, ProspectInput
+from app.services.audit import write_audit
+from app.services.followup import build_follow_up_tasks
+from app.services.pii import redact_sensitive_text
+from app.services.prompt_loader import load_locked_prompt
+from app.services.summary_generator import generate_summary
+
+router = APIRouter(prefix="/api/intake", tags=["intake"])
+
+STAGES = [
+    "greeting_and_disclosure",
+    "consent",
+    "open_fact_gathering",
+    "silent_classification",
+    "targeted_followups",
+    "evidence_request",
+    "cross_practice_scan",
+    "defendant_capture",
+    "wrap",
+]
+
+
+def suggested_prompt(stage_index: int) -> str:
+    prompts = [
+        "Hello, I am an AI intake assistant, not a lawyer. This chat is not legal advice and does not create an attorney-client relationship. Are you comfortable continuing?",
+        "Please describe what happened in your own words.",
+        "Who contacted you, how did they contact you, and when did this happen?",
+        "Please share any documents, screenshots, letters, call logs, or credit-report materials you already have.",
+        "A human reviewer will review what was collected. Do you want to add anything else before we wrap up?",
+    ]
+    return prompts[min(stage_index, len(prompts) - 1)]
+
+
+async def _get_or_create_conversation(session: AsyncSession, payload: MessageCreate) -> tuple[Prospect, Conversation]:
+    if payload.conversation_id:
+        conversation = await session.get(Conversation, payload.conversation_id)
+        if not conversation:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        prospect = await session.get(Prospect, conversation.prospect_id)
+        if not prospect:
+            raise HTTPException(status_code=404, detail="Prospect not found")
+        return prospect, conversation
+
+    prospect = Prospect(
+        first_name=payload.prospect.first_name,
+        last_name=payload.prospect.last_name,
+        email=payload.prospect.email,
+        phone=payload.prospect.phone,
+        state=payload.prospect.state,
+        source_channel=payload.prospect.source_channel,
+        consent_status=payload.prospect.consent_status,
+        external_ids=payload.prospect.external_ids,
+        status="in_intake",
+    )
+    session.add(prospect)
+    await session.flush()
+
+    _, prompt_hash = load_locked_prompt()
+    conversation = Conversation(
+        prospect_id=prospect.id,
+        channel=payload.prospect.source_channel,
+        status="active",
+        agent_version=prompt_hash[:12],
+    )
+    session.add(conversation)
+    await session.flush()
+    return prospect, conversation
+
+
+@router.post("/messages", response_model=APIMessageResponse)
+async def create_message(payload: MessageCreate, request: Request, session: AsyncSession = Depends(get_session)) -> APIMessageResponse:
+    prospect, conversation = await _get_or_create_conversation(session, payload)
+    clean = redact_sensitive_text(payload.content)
+    message = Message(
+        conversation_id=conversation.id,
+        role=payload.role,
+        content=clean,
+        tool_calls=None,
+        model_metadata={"sanitized": clean != payload.content},
+    )
+    session.add(message)
+    await write_audit(
+        session,
+        actor=payload.role,
+        action="message.received",
+        entity_type="conversation",
+        entity_id=conversation.id,
+        after_state={"content": clean},
+        ip=request.client.host if request.client else None,
+    )
+    await session.commit()
+
+    result = await session.execute(select(Message).where(Message.conversation_id == conversation.id).order_by(Message.created_at.asc()))
+    messages = result.scalars().all()
+    prospect_turns = len([m for m in messages if m.role == "prospect"])
+    stage_index = min(max(prospect_turns - 1, 0), len(STAGES) - 1)
+    return APIMessageResponse(
+        conversation_id=conversation.id,
+        sanitized_content=clean,
+        suggested_next_prompt=suggested_prompt(stage_index),
+        current_stage=STAGES[stage_index],
+    )
+
+
+@router.post("/conversations/{conversation_id}/finalize")
+async def finalize_conversation(conversation_id: str, session: AsyncSession = Depends(get_session)) -> dict:
+    conversation = await session.get(Conversation, conversation_id)
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    prospect = await session.get(Prospect, conversation.prospect_id)
+    if not prospect:
+        raise HTTPException(status_code=404, detail="Prospect not found")
+
+    result = await session.execute(select(Message).where(Message.conversation_id == conversation.id).order_by(Message.created_at.asc()))
+    messages = result.scalars().all()
+    transcript_text = "\n".join([f"{m.role}: {m.content}" for m in messages])
+    if not transcript_text.strip():
+        raise HTTPException(status_code=400, detail="Conversation has no messages")
+
+    summary = await generate_summary(
+        session=session,
+        conversation_id=conversation.id,
+        prospect=ProspectInput(
+            first_name=prospect.first_name,
+            last_name=prospect.last_name,
+            email=prospect.email,
+            phone=prospect.phone,
+            state=prospect.state,
+            source_channel=prospect.source_channel,
+            consent_status=prospect.consent_status,
+            external_ids=prospect.external_ids,
+        ),
+        transcript_text=transcript_text,
+    )
+
+    record = IntakeSummaryRecord(
+        conversation_id=conversation.id,
+        primary_practice_area=summary.primary_practice_area.value,
+        primary_confidence=f"{summary.primary_confidence:.2f}",
+        secondary_practice_areas=[item.model_dump() for item in summary.secondary_practice_areas],
+        fact_pattern=summary.fact_pattern,
+        defendants=[item.model_dump() for item in summary.defendants],
+        evidence_collected=summary.evidence_collected,
+        evidence_requested=summary.evidence_requested,
+        evidence_missing=summary.evidence_missing,
+        cross_practice_flag=summary.cross_practice_flag,
+        follow_up_question=summary.follow_up_question,
+        agent_recommendation=summary.agent_recommendation.value,
+        review_status="pending",
+        compliance_check=summary.compliance_check.model_dump(),
+        agent_version=summary.agent_version,
+        raw_summary_json=summary.model_dump(mode="json"),
+    )
+    session.add(record)
+
+    if summary.evidence_missing:
+        for task in build_follow_up_tasks(conversation.id, summary.evidence_missing, conversation.channel):
+            session.add(task)
+
+    conversation.status = "complete"
+    await write_audit(
+        session,
+        actor="agent",
+        action="summary.generated",
+        entity_type="conversation",
+        entity_id=conversation.id,
+        after_state={
+            "primary_practice_area": summary.primary_practice_area.value,
+            "agent_version": summary.agent_version,
+            "llm_request_metadata": summary.llm_request_metadata,
+        },
+    )
+    await session.commit()
+    return {"conversation_id": conversation.id, "summary": summary.model_dump(mode="json")}
+
+
+@router.get("/conversations/{conversation_id}", response_model=ConversationDetail)
+async def get_conversation(conversation_id: str, session: AsyncSession = Depends(get_session)) -> ConversationDetail:
+    conversation = await session.get(Conversation, conversation_id)
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    result = await session.execute(select(Message).where(Message.conversation_id == conversation.id).order_by(Message.created_at.asc()))
+    messages = result.scalars().all()
+    summary_result = await session.execute(select(IntakeSummaryRecord).where(IntakeSummaryRecord.conversation_id == conversation.id).order_by(IntakeSummaryRecord.created_at.desc()))
+    summary = summary_result.scalars().first()
+
+    return ConversationDetail(
+        id=conversation.id,
+        status=conversation.status,
+        channel=conversation.channel,
+        started_at=conversation.started_at,
+        messages=[
+            {
+                "id": m.id,
+                "role": m.role,
+                "content": m.content,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+                "model_metadata": m.model_metadata,
+            }
+            for m in messages
+        ],
+        summary=summary.raw_summary_json if summary else None,
+    )
+
+================================================================================
+FILE: app/api/routes_followups.py
+================================================================================
+from __future__ import annotations
+
+from datetime import datetime
+from fastapi import APIRouter, Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.config import settings
+from app.db import get_session
+from app.models import FollowUpTask, Message
+from app.schemas import FollowUpTaskView
+from app.services.audit import write_audit
+from app.services.followup import should_send_follow_up
+router = APIRouter(prefix="/api/followups", tags=["followups"])
+
+
+@router.get("/due", response_model=list[FollowUpTaskView])
+async def due_followups(session: AsyncSession = Depends(get_session)) -> list[FollowUpTaskView]:
+    now = datetime.utcnow()
+    result = await session.execute(
+        select(FollowUpTask).where(FollowUpTask.status == "scheduled", FollowUpTask.due_at <= now).order_by(FollowUpTask.due_at.asc())
+    )
+    return list(result.scalars().all())
+
+
+@router.post("/run")
+async def run_followups(session: AsyncSession = Depends(get_session)) -> dict:
+    now = datetime.utcnow()
+    result = await session.execute(
+        select(FollowUpTask).where(FollowUpTask.status == "scheduled", FollowUpTask.due_at <= now).order_by(FollowUpTask.due_at.asc())
+    )
+    tasks = result.scalars().all()
+    sent = 0
+    blocked = 0
+
+    for task in tasks:
+        last_message_result = await session.execute(
+            select(Message).where(Message.conversation_id == task.conversation_id).order_by(Message.created_at.desc())
+        )
+        latest = last_message_result.scalars().first()
+        allowed, reason = should_send_follow_up(now, settings.outbound_kill_switch, latest.content if latest else None)
+        if not allowed:
+            task.status = "blocked"
+            task.stop_reason = reason
+            blocked += 1
+            await write_audit(
+                session,
+                actor="system",
+                action="followup.blocked",
+                entity_type="follow_up_task",
+                entity_id=task.id,
+                after_state={"reason": reason},
+            )
+            continue
+
+        task.status = "sent"
+        task.sent_at = now
+        sent += 1
+        await write_audit(
+            session,
+            actor="system",
+            action="followup.sent",
+            entity_type="follow_up_task",
+            entity_id=task.id,
+            after_state={"payload": task.payload, "template_id": task.template_id},
+        )
+
+    await session.commit()
+    return {"sent": sent, "blocked": blocked}
+
+================================================================================
+FILE: app/api/routes_review.py
+================================================================================
+from __future__ import annotations
+
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db import get_session
+from app.models import Conversation, IntakeSummaryRecord, Message
+from app.schemas import ReviewAction
+from app.services.audit import write_audit
+
+router = APIRouter(prefix="/api/review", tags=["review"])
+
+
+@router.get("/queue")
+async def review_queue(session: AsyncSession = Depends(get_session)) -> list[dict]:
+    result = await session.execute(
+        select(IntakeSummaryRecord).where(IntakeSummaryRecord.review_status == "pending").order_by(IntakeSummaryRecord.created_at.asc())
+    )
+    rows = result.scalars().all()
+    return [
+        {
+            "summary_id": row.id,
+            "conversation_id": row.conversation_id,
+            "practice_area": row.primary_practice_area,
+            "recommendation": row.agent_recommendation,
+            "cross_practice_flag": row.cross_practice_flag,
+            "created_at": row.created_at.isoformat(),
+        }
+        for row in rows
+    ]
+
+
+@router.get("/summaries/{summary_id}")
+async def get_summary(summary_id: str, session: AsyncSession = Depends(get_session)) -> dict:
+    summary = await session.get(IntakeSummaryRecord, summary_id)
+    if not summary:
+        raise HTTPException(status_code=404, detail="Summary not found")
+    result = await session.execute(select(Message).where(Message.conversation_id == summary.conversation_id).order_by(Message.created_at.asc()))
+    messages = result.scalars().all()
+    return {
+        "summary": summary.raw_summary_json,
+        "review_status": summary.review_status,
+        "transcript": [{"role": m.role, "content": m.content, "created_at": m.created_at.isoformat()} for m in messages],
+    }
+
+
+@router.post("/summaries/{summary_id}/decision")
+async def review_decision(summary_id: str, payload: ReviewAction, session: AsyncSession = Depends(get_session)) -> dict:
+    summary = await session.get(IntakeSummaryRecord, summary_id)
+    if not summary:
+        raise HTTPException(status_code=404, detail="Summary not found")
+
+    before = dict(summary.raw_summary_json)
+    summary.review_status = payload.decision.value
+    summary.reviewer_id = payload.reviewer_id
+    summary.reviewed_at = datetime.utcnow()
+    if payload.updated_summary:
+        summary.raw_summary_json = payload.updated_summary
+    if payload.decision.value == "approved":
+        summary.final_disposition = "approved_for_next_step"
+    elif payload.decision.value == "rejected":
+        summary.final_disposition = "rejected_to_engineering_or_human_followup"
+    else:
+        summary.final_disposition = "modified_for_review"
+
+    conversation = await session.get(Conversation, summary.conversation_id)
+    conversation.status = "in_review"
+
+    await write_audit(
+        session,
+        actor=f"reviewer:{payload.reviewer_id}",
+        action=f"review.{payload.decision.value}",
+        entity_type="intake_summary",
+        entity_id=summary.id,
+        before_state=before,
+        after_state=summary.raw_summary_json,
+    )
+    await session.commit()
+    return {"status": "ok", "summary_id": summary.id, "review_status": summary.review_status}
+
+================================================================================
+FILE: scripts/init_db.py
+================================================================================
+import asyncio
+from app.db import Base, engine
+
+
+async def main() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+    print("Database initialized")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+================================================================================
+FILE: tests/test_validator.py
+================================================================================
+from app.schemas import AgentRecommendation, ComplianceCheck, IntakeSummary, PracticeArea, ProspectInput
+
+
+def test_valid_summary_schema():
+    summary = IntakeSummary(
+        conversation_id="123",
+        prospect=ProspectInput(first_name="Ada", state="CA"),
+        primary_practice_area=PracticeArea.TCPA,
+        primary_confidence=0.88,
+        secondary_practice_areas=[],
+        fact_pattern="The prospect reports repeated calls to a mobile phone from an unknown caller. The caller discussed a debt and continued contact after the prospect objected. A human reviewer should confirm timing, consent, and evidence.",
+        defendants=[],
+        evidence_collected=[],
+        evidence_requested=["Call logs showing incoming calls or texts"],
+        evidence_missing=["Call logs showing incoming calls or texts"],
+        cross_practice_flag=False,
+        follow_up_question="Which missing evidence item is most likely to confirm the TCPA intake?",
+        agent_recommendation=AgentRecommendation.REQUEST_MORE_EVIDENCE,
+        compliance_check=ComplianceCheck(no_legal_advice_given=True, no_outcome_promised=True, no_acr_implied=True, disclosure_logged=True),
+        agent_version="hash+model",
+        llm_request_metadata={},
+    )
+    assert summary.primary_practice_area == PracticeArea.TCPA
+
+================================================================================
+FILE: tests/test_followup.py
+================================================================================
+from datetime import datetime, timedelta, timezone
+
+from app.services.followup import compute_due_schedule, quiet_hours_ok
+
+
+def test_followup_schedule_count_and_spacing():
+    now = datetime(2026, 6, 1, 17, 0, tzinfo=timezone.utc)
+    due = compute_due_schedule(now)
+    assert len(due) == 3
+    assert due[0] == now + timedelta(hours=24)
+    assert due[1] == now + timedelta(hours=72)
+    assert due[2] == now + timedelta(days=7)
+
+
+def test_quiet_hours():
+    allowed = datetime(2026, 6, 1, 18, 0, tzinfo=timezone.utc)
+    blocked = datetime(2026, 6, 1, 4, 0, tzinfo=timezone.utc)
+    assert quiet_hours_ok(allowed, -7) is True
+    assert quiet_hours_ok(blocked, -7) is False
+
+================================================================================
+FILE: tests/test_llm_phase2.py
+================================================================================
+import asyncio
+from unittest.mock import patch
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+from app.config import Settings
+from app.db import Base
+from app.schemas import PracticeArea, ProspectInput
+from app.services.llm_agent_core import OpenAICompatibleClient, StubLLMClient, get_llm_client
+from app.services.summary_generator import generate_summary
+
+
+async def _run():
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    Session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    async with Session() as session:
+        summary = await generate_summary(
+            session,
+            "conv-1",
+            ProspectInput(first_name="Ada", state="CA"),
+            "I keep getting calls on my mobile from a debt collector. They called many times and I have call logs and screenshots. They also talked about a debt.",
+        )
+        assert summary.primary_practice_area in {PracticeArea.TCPA, PracticeArea.FDCPA}
+        assert "classification" in summary.llm_request_metadata
+        assert summary.agent_version
+    await engine.dispose()
+
+
+def test_phase2_llm_flow():
+    asyncio.run(_run())
+
+
+def test_provider_selection_stub_mode_true():
+    """Test that stub client is used when stub_mode is True"""
+    with patch("app.services.llm_agent_core.settings") as mock_settings:
+        mock_settings.llm_provider = "openai_compatible"
+        mock_settings.llm_stub_mode = True
+        mock_settings.llm_api_key = "sk-test-key"
+        client = get_llm_client()
+        assert isinstance(client, StubLLMClient), "Should use stub when stub_mode=True even with API key"
+
+
+def test_provider_selection_missing_api_key():
+    """Test that stub client is used when API key is missing"""
+    with patch("app.services.llm_agent_core.settings") as mock_settings:
+        mock_settings.llm_provider = "openai_compatible"
+        mock_settings.llm_stub_mode = False
+        mock_settings.llm_api_key = None
+        client = get_llm_client()
+        assert isinstance(client, StubLLMClient), "Should use stub when API key is missing"
+
+
+def test_provider_selection_empty_api_key():
+    """Test that stub client is used when API key is empty string"""
+    with patch("app.services.llm_agent_core.settings") as mock_settings:
+        mock_settings.llm_provider = "openai_compatible"
+        mock_settings.llm_stub_mode = False
+        mock_settings.llm_api_key = ""
+        client = get_llm_client()
+        assert isinstance(client, StubLLMClient), "Should use stub when API key is empty"
+
+
+def test_provider_selection_real_client():
+    """Test that real client is used when properly configured"""
+    with patch("app.services.llm_agent_core.settings") as mock_settings:
+        mock_settings.llm_provider = "openai_compatible"
+        mock_settings.llm_stub_mode = False
+        mock_settings.llm_api_key = "sk-test-key"
+        client = get_llm_client()
+        assert isinstance(client, OpenAICompatibleClient), "Should use real client when API key present and stub_mode=False"
+
+
+def test_provider_selection_wrong_provider():
+    """Test that stub client is used when provider is not openai_compatible"""
+    with patch("app.services.llm_agent_core.settings") as mock_settings:
+        mock_settings.llm_provider = "some_other_provider"
+        mock_settings.llm_stub_mode = False
+        mock_settings.llm_api_key = "sk-test-key"
+        client = get_llm_client()
+        assert isinstance(client, StubLLMClient), "Should use stub when provider is not openai_compatible"
+
+
+def test_stub_client_preserves_metadata():
+    """Test that stub client still returns proper metadata for audit"""
+    client = StubLLMClient()
+    result, metadata, raw = asyncio.run(client.classify("I got robocalls on my cell phone"))
+    assert metadata["stubbed"] is True
+    assert metadata["temperature"] == 0.0
+    assert "raw_response_preview" in metadata
+    assert result.primary_practice_area == PracticeArea.TCPA
+
+================================================================================
+END OF CONSOLIDATED CODEBASE
+================================================================================

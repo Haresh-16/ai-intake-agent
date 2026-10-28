@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Intake Agent V1 Dashboard</title>
+  <style>
+    :root {
+      --bg: #f7f6f2;
+      --surface: #ffffff;
+      --text: #28251d;
+      --muted: #6b6a66;
+      --border: #d8d5cf;
+      --primary: #01696f;
+      --success: #2d7a4c;
+      --warning: #d97706;
+      --danger: #a13544;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,.75);
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(8px);
+      z-index: 10;
+    }
+    main {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px;
+      padding: 20px;
+      min-height: calc(100vh - 80px);
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 6px 18px rgba(0,0,0,.04);
+      overflow: hidden;
+    }
+    .panel h2 {
+      margin: 0;
+      font-size: 1rem;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: #fafaf8;
+    }
+    .tab {
+      flex: 1;
+      padding: 12px 16px;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab:hover {
+      color: var(--text);
+      background: rgba(1, 105, 111, 0.05);
+    }
+    .tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: var(--surface);
+    }
+    .queue-item {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .queue-item:hover { background: #fafaf8; }
+    .queue-item.reviewed {
+      background: #f9fafb;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    .badge.approved { background: #d1fae5; color: var(--success); }
+    .badge.modified { background: #fef3c7; color: var(--warning); }
+    .badge.rejected { background: #fee2e2; color: var(--danger); }
+    .badge.pending { background: #e0e7ff; color: #4338ca; }
+    .meta { color: var(--muted); font-size: .92rem; }
+    .content { padding: 18px; }
+    .review-info {
+      background: #f3f1ed;
+      padding: 12px 14px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+    }
+    .review-info strong { color: var(--text); }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #f3f1ed;
+      padding: 14px;
+      border-radius: 12px;
+      overflow: auto;
+      max-height: 300px;
+      font-size: 0.85rem;
+    }
+    textarea {
+      width: 100%;
+      min-height: 200px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      resize: vertical;
+    }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 18px;
+      cursor: pointer;
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    button:hover { opacity: 0.9; }
+    button.danger { background: var(--danger); }
+    button.warning { background: var(--warning); }
+    button.secondary { background: #6b7280; }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .error-msg {
+      background: #fee2e2;
+      color: var(--danger);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .success-msg {
+      background: #d1fae5;
+      color: var(--success);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .edit-section {
+      margin-top: 16px;
+      padding: 16px;
+      background: #fef3c7;
+      border-radius: 12px;
+    }
+    .edit-section h4 { margin: 0 0 12px 0; }
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>AI Intake Agent V1</strong>
+    <div class="meta">Review Dashboard - Queue + Detail + Actions</div>
+  </header>
+  <main>
+    <section class="panel">
+      <div class="tabs">
+        <button class="tab active" id="tab-pending" onclick="switchTab('pending')">Pending</button>
+        <button class="tab" id="tab-approved" onclick="switchTab('approved')">Approved</button>
+        <button class="tab" id="tab-modified" onclick="switchTab('modified')">Modified</button>
+        <button class="tab" id="tab-rejected" onclick="switchTab('rejected')">Rejected</button>
+      </div>
+      <div id="queue"></div>
+    </section>
+    <section class="panel">
+      <h2>Summary Detail</h2>
+      <div class="content" id="detail">Select an item from the queue.</div>
+    </section>
+  </main>
+  <script>
+    let currentTab = 'pending';
+    let currentSummaryId = null;
+    let currentSummaryData = null;
+
+    function switchTab(tab) {
+      currentTab = tab;
+      currentSummaryId = null;
+      currentSummaryData = null;
+
+      // Update active tab styling
+      document.querySelectorAll('.tab').forEach(function(t) {
+        t.classList.remove('active');
+      });
+      document.getElementById('tab-' + tab).classList.add('active');
+
+      // Clear detail panel
+      document.getElementById('detail').innerHTML = 'Select an item from the queue.';
+
+      // Load queue for selected tab
+      loadQueue(tab);
+    }
+
+    function loadQueue(status) {
+      var queue = document.getElementById('queue');
+      queue.innerHTML = '<div class="queue-item">Loading...</div>';
+
+      var url = status === 'pending'
+        ? '/api/review/queue'
+        : '/api/review/summaries/by-status/' + status;
+
+      fetch(url)
+        .then(function(response) {
+          if (!response.ok) {
+            throw new Error('HTTP error ' + response.status);
+          }
+          return response.json();
+        })
+        .then(function(items) {
+          queue.innerHTML = '';
+          if (!items.length) {
+            queue.innerHTML = '<div class="queue-item">No ' + status + ' summaries.</div>';
+            return;
+          }
+
+          items.forEach(function(item) {
+            var el = document.createElement('div');
+            el.className = status === 'pending' ? 'queue-item' : 'queue-item reviewed';
+
+            var badgeHtml = '';
+            if (status !== 'pending') {
+              badgeHtml = '<span class="badge ' + status + '">' + status + '</span>';
+            }
+
+            var reviewerInfo = '';
+            if (item.reviewer_id && item.reviewed_at) {
+              var reviewDate = new Date(item.reviewed_at).toLocaleString();
+              reviewerInfo = '<div class="meta">Reviewed by: ' + item.reviewer_id + ' - ' + reviewDate + '</div>';
+            }
+
+            el.innerHTML = '<strong>' + item.practice_area + '</strong>' + badgeHtml +
+              '<div class="meta">' + item.recommendation + ' - Created: ' + new Date(item.created_at).toLocaleString() + '</div>' +
+              reviewerInfo;
+
+            el.onclick = function() {
+              loadSummary(item.summary_id);
+            };
+            queue.appendChild(el);
+          });
+        })
+        .catch(function(error) {
+          queue.innerHTML = '<div class="queue-item error-msg">Error loading queue: ' + error.message + '</div>';
+          console.error('Error loading queue:', error);
+        });
+    }
+
+    function loadSummary(summaryId) {
+      var detail = document.getElementById('detail');
+      detail.innerHTML = '<p>Loading...</p>';
+      currentSummaryId = summaryId;
+
+      fetch('/api/review/summaries/' + summaryId)
+        .then(function(response) {
+          if (!response.ok) {
+            throw new Error('HTTP error ' + response.status);
+          }
+          return response.json();
+        })
+        .then(function(data) {
+          currentSummaryData = data;
+
+          var reviewInfoHtml = '';
+          if (data.review_status !== 'pending' && data.reviewer_id) {
+            var reviewDate = data.reviewed_at ? new Date(data.reviewed_at).toLocaleString() : 'N/A';
+            reviewInfoHtml = '<div class="review-info">' +
+              '<strong>Review Status:</strong> <span class="badge ' + data.review_status + '">' + data.review_status + '</span><br>' +
+              '<strong>Reviewed By:</strong> ' + data.reviewer_id + '<br>' +
+              '<strong>Reviewed At:</strong> ' + reviewDate + '<br>' +
+              '<strong>Disposition:</strong> ' + (data.final_disposition || 'N/A') +
+              '</div>';
+          }
+
+          var actionsHtml = '';
+          if (data.review_status === 'pending') {
+            actionsHtml = '<div class="actions">' +
+              '<button onclick="approveRecord()">Approve</button>' +
+              '<button class="warning" onclick="showModifyForm()">Modify</button>' +
+              '<button class="danger" onclick="rejectRecord()">Reject</button>' +
+              '</div>';
+          } else {
+            actionsHtml = '<div class="actions">' +
+              '<button disabled>Already Reviewed (' + data.review_status + ')</button>' +
+              '</div>';
+          }
+
+          detail.innerHTML = reviewInfoHtml + actionsHtml +
+            '<div id="modify-section"></div>' +
+            '<h3>Summary JSON</h3>' +
+            '<pre>' + JSON.stringify(data.summary, null, 2) + '</pre>' +
+            '<h3>Transcript</h3>' +
+            '<pre>' + JSON.stringify(data.transcript, null, 2) + '</pre>';
+        })
+        .catch(function(error) {
+          detail.innerHTML = '<div class="error-msg">Error loading summary: ' + error.message + '</div>';
+          console.error('Error loading summary:', error);
+        });
+    }
+
+    function approveRecord() {
+      if (!currentSummaryId) {
+        alert('No summary selected');
+        return;
+      }
+
+      var reviewerId = prompt('Enter your Reviewer ID:');
+      if (!reviewerId || reviewerId.trim() === '') {
+        alert('Reviewer ID is required');
+        return;
+      }
+
+      submitDecision(currentSummaryId, 'approved', reviewerId.trim(), null);
+    }
+
+    function rejectRecord() {
+      if (!currentSummaryId) {
+        alert('No summary selected');
+        return;
+      }
+
+      var reviewerId = prompt('Enter your Reviewer ID:');
+      if (!reviewerId || reviewerId.trim() === '') {
+        alert('Reviewer ID is required');
+        return;
+      }
+
+      var reason = prompt('Enter rejection reason (optional):') || '';
+
+      submitDecision(currentSummaryId, 'rejected', reviewerId.trim(), null, reason);
+    }
+
+    function showModifyForm() {
+      if (!currentSummaryId || !currentSummaryData) {
+        alert('No summary selected');
+        return;
+      }
+
+      var modifySection = document.getElementById('modify-section');
+      modifySection.innerHTML = '<div class="edit-section">' +
+        '<h4>Edit Summary JSON</h4>' +
+        '<p class="meta">Make your changes below and click "Confirm Modification"</p>' +
+        '<textarea id="edit-summary-json">' + JSON.stringify(currentSummaryData.summary, null, 2) + '</textarea>' +
+        '<div class="actions" style="margin-top: 12px;">' +
+        '<button onclick="confirmModification()">Confirm Modification</button>' +
+        '<button class="secondary" onclick="cancelModification()">Cancel</button>' +
+        '</div>' +
+        '</div>';
+    }
+
+    function cancelModification() {
+      document.getElementById('modify-section').innerHTML = '';
+    }
+
+    function confirmModification() {
+      if (!currentSummaryId) {
+        alert('No summary selected');
+        return;
+      }
+
+      var reviewerId = prompt('Enter your Reviewer ID:');
+      if (!reviewerId || reviewerId.trim() === '') {
+        alert('Reviewer ID is required');
+        return;
+      }
+
+      var editedJson = document.getElementById('edit-summary-json').value;
+      var updatedSummary;
+      try {
+        updatedSummary = JSON.parse(editedJson);
+      } catch (e) {
+        alert('Invalid JSON format. Please check your edits.\n\nError: ' + e.message);
+        return;
+      }
+
+      submitDecision(currentSummaryId, 'modified', reviewerId.trim(), updatedSummary);
+    }
+
+    function submitDecision(summaryId, decision, reviewerId, updatedSummary, reviewerNote) {
+      var payload = {
+        decision: decision,
+        reviewer_id: reviewerId,
+        reviewer_note: reviewerNote || ''
+      };
+
+      if (updatedSummary) {
+        payload.updated_summary = updatedSummary;
+      }
+
+      console.log('Submitting decision:', payload);
+
+      fetch('/api/review/summaries/' + summaryId + '/decision', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+        .then(function(response) {
+          console.log('Response status:', response.status);
+          if (!response.ok) {
+            return response.text().then(function(text) {
+              throw new Error('HTTP ' + response.status + ': ' + text);
+            });
+          }
+          return response.json();
+        })
+        .then(function(result) {
+          console.log('Decision result:', result);
+          alert('Success! Decision "' + decision + '" has been recorded.\n\nSummary ID: ' + summaryId);
+
+          // Refresh the queue and clear detail
+          loadQueue(currentTab);
+          document.getElementById('detail').innerHTML = '<div class="success-msg">Decision recorded successfully!</div><p>Select another item from the queue.</p>';
+          currentSummaryId = null;
+          currentSummaryData = null;
+        })
+        .catch(function(error) {
+          console.error('Error submitting decision:', error);
+          alert('Error recording decision:\n\n' + error.message + '\n\nPlease check the console for details.');
+        });
+    }
+
+    // Load pending queue on page load
+    loadQueue('pending');
+  </script>
+</body>
+</html>

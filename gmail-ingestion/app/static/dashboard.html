@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Intake Agent V1 Dashboard</title>
+  <style>
+    :root {
+      --bg: #f7f6f2;
+      --surface: #ffffff;
+      --text: #28251d;
+      --muted: #6b6a66;
+      --border: #d8d5cf;
+      --primary: #01696f;
+      --danger: #a13544;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,.75);
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(8px);
+    }
+    main {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px;
+      padding: 20px;
+      min-height: calc(100vh - 80px);
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 6px 18px rgba(0,0,0,.04);
+      overflow: hidden;
+    }
+    .panel h2 {
+      margin: 0;
+      font-size: 1rem;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .queue-item {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .queue-item:hover { background: #fafaf8; }
+    .meta { color: var(--muted); font-size: .92rem; }
+    .content { padding: 18px; }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #f3f1ed;
+      padding: 14px;
+      border-radius: 12px;
+      overflow: auto;
+    }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+    }
+    button.danger { background: var(--danger); }
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>AI Intake Agent V1</strong>
+    <div class="meta">Queue + detail + reviewer actions</div>
+  </header>
+  <main>
+    <section class="panel">
+      <h2>Pending queue</h2>
+      <div id="queue"></div>
+    </section>
+    <section class="panel">
+      <h2>Summary detail</h2>
+      <div class="content" id="detail">Select a queue item.</div>
+    </section>
+  </main>
+  <script>
+    async function loadQueue() {
+      const res = await fetch('/api/review/queue');
+      const items = await res.json();
+      const queue = document.getElementById('queue');
+      queue.innerHTML = '';
+      if (!items.length) {
+        queue.innerHTML = '<div class="queue-item">No pending summaries.</div>';
+        return;
+      }
+      items.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'queue-item';
+        el.innerHTML = `<strong>${item.practice_area}</strong><div class="meta">${item.recommendation} • ${item.created_at}</div>`;
+        el.onclick = () => loadSummary(item.summary_id);
+        queue.appendChild(el);
+      });
+    }
+
+    async function loadSummary(summaryId) {
+      const res = await fetch(`/api/review/summaries/${summaryId}`);
+      const data = await res.json();
+      const detail = document.getElementById('detail');
+      detail.innerHTML = `
+        <div class="actions">
+          <button onclick="decide('${summaryId}','approved')">Approve</button>
+          <button onclick="decide('${summaryId}','modified')">Modify</button>
+          <button class="danger" onclick="decide('${summaryId}','rejected')">Reject</button>
+        </div>
+        <h3>Summary JSON</h3>
+        <pre>${JSON.stringify(data.summary, null, 2)}</pre>
+        <h3>Transcript</h3>
+        <pre>${JSON.stringify(data.transcript, null, 2)}</pre>
+      `;
+    }
+
+    async function decide(summaryId, decision) {
+      const reviewerId = prompt('Reviewer ID');
+      if (!reviewerId) return;
+      await fetch(`/api/review/summaries/${summaryId}/decision`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewer_id: reviewerId, decision, note: '' })
+      });
+      alert(`Decision recorded: ${decision}`);
+      loadQueue();
+      document.getElementById('detail').innerHTML = 'Select a queue item.';
+    }
+
+    loadQueue();
+  </script>
+</body>
+</html>

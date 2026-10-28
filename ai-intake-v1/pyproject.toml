@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-intake-v1"
+version = "0.1.0"
+description = "Supervised AI Intake Agent V1 scaffold"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.30.0",
+  "sqlalchemy>=2.0.32",
+  "aiosqlite>=0.20.0",
+  "pydantic>=2.8.2",
+  "pydantic-settings>=2.4.0",
+  "python-multipart>=0.0.9",
+  "pytest>=8.3.2",
+  "httpx>=0.27.0"
+]
+
+[tool.setuptools]
+packages = ["app", "app.api", "app.services"]

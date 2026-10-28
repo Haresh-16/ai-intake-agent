@@ -1,0 +1,14 @@
+# Streamlit Defendant Intake UI Dependencies
+
+# Core Streamlit
+streamlit>=1.30.0
+
+# HTTP Client
+httpx>=0.27.0
+
+# Validation (matching backend)
+pydantic>=2.8.2
+pydantic-settings>=2.4.0
+
+# Utilities
+python-dateutil>=2.8.2

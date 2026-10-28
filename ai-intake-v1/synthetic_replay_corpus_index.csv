@@ -1,0 +1,101 @@
+case_id,title,primary_practice_area,secondary_practice_areas,cross_practice_flag,expected_agent_recommendation,expected_routing_tier,defendant,edge_case_tags
+REPLAY-001,Repeated debt-collection calls to mobile,TCPA,FDCPA,True,request_more_evidence,Tier 3,Portfolio Recovery Associates,asks_case_value|creditor_or_collector_calls_mobile|mentions_sensitive_identifier|opt_out|partial_evidence|pattern_bank_hit
+REPLAY-002,Wrong-number prerecorded calls,TCPA,FDCPA,True,request_more_evidence,Tier 3,Receivables Performance Management,partial_evidence|pattern_bank_hit|wrong_number
+REPLAY-003,STOP request ignored for marketing texts,TCPA,,False,request_more_evidence,Tier 3,Comenity Bank,opt_out|partial_evidence|pattern_bank_hit|revoked_consent
+REPLAY-004,Collector calls and reports debt to bureaus,TCPA,FDCPA|FCRA,True,request_more_evidence,Tier 3,Midland Credit Management,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-005,Ringless voicemail campaign,TCPA,,False,request_more_evidence,Tier 2,ADT Solar,partial_evidence
+REPLAY-006,Prospect asks case value during robocall complaint,TCPA,,False,request_more_evidence,Tier 2,SunRun,asks_case_value|opt_out|partial_evidence
+REPLAY-007,Repeated debt-collection calls to mobile,TCPA,FDCPA,True,request_more_evidence,Tier 3,Portfolio Recovery Associates,creditor_or_collector_calls_mobile|partial_evidence|pattern_bank_hit
+REPLAY-008,Wrong-number prerecorded calls,TCPA,FDCPA,True,request_more_evidence,Tier 3,Receivables Performance Management,asks_case_value|partial_evidence|pattern_bank_hit|wrong_number
+REPLAY-009,STOP request ignored for marketing texts,TCPA,,False,request_more_evidence,Tier 3,Comenity Bank,mentions_sensitive_identifier|opt_out|partial_evidence|pattern_bank_hit|revoked_consent
+REPLAY-010,Collector calls and reports debt to bureaus,TCPA,FDCPA|FCRA,True,route_to_attorney,Tier 3,Midland Credit Management,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-011,Ringless voicemail campaign,TCPA,,False,request_more_evidence,Tier 2,ADT Solar,opt_out|partial_evidence
+REPLAY-012,Prospect asks case value during robocall complaint,TCPA,,False,request_more_evidence,Tier 2,SunRun,asks_case_value|partial_evidence
+REPLAY-013,Repeated debt-collection calls to mobile,TCPA,FDCPA,True,request_more_evidence,Tier 3,Portfolio Recovery Associates,creditor_or_collector_calls_mobile|partial_evidence|pattern_bank_hit
+REPLAY-014,Wrong-number prerecorded calls,TCPA,FDCPA,True,request_more_evidence,Tier 3,Receivables Performance Management,partial_evidence|pattern_bank_hit|wrong_number
+REPLAY-015,STOP request ignored for marketing texts,TCPA,,False,request_more_evidence,Tier 3,Comenity Bank,asks_case_value|opt_out|partial_evidence|pattern_bank_hit|revoked_consent
+REPLAY-016,Collector calls and reports debt to bureaus,TCPA,FDCPA|FCRA,True,request_more_evidence,Tier 3,Midland Credit Management,credit_reporting_overlap|opt_out|partial_evidence|pattern_bank_hit
+REPLAY-017,Ringless voicemail campaign,TCPA,,False,request_more_evidence,Tier 2,ADT Solar,mentions_sensitive_identifier|partial_evidence
+REPLAY-018,Prospect asks case value during robocall complaint,TCPA,,False,request_more_evidence,Tier 2,SunRun,asks_case_value|partial_evidence
+REPLAY-019,Repeated debt-collection calls to mobile,TCPA,FDCPA,True,request_more_evidence,Tier 3,Portfolio Recovery Associates,creditor_or_collector_calls_mobile|partial_evidence|pattern_bank_hit
+REPLAY-020,Wrong-number prerecorded calls,TCPA,FDCPA,True,request_more_evidence,Tier 3,Receivables Performance Management,partial_evidence|pattern_bank_hit|wrong_number
+REPLAY-021,STOP request ignored for marketing texts,TCPA,,False,request_more_evidence,Tier 3,Comenity Bank,opt_out|partial_evidence|pattern_bank_hit|revoked_consent
+REPLAY-022,Collector calls and reports debt to bureaus,TCPA,FDCPA|FCRA,True,request_more_evidence,Tier 3,Midland Credit Management,asks_case_value|credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-023,Ringless voicemail campaign,TCPA,,False,request_more_evidence,Tier 2,ADT Solar,partial_evidence
+REPLAY-024,Prospect asks case value during robocall complaint,TCPA,,False,request_more_evidence,Tier 2,SunRun,asks_case_value|partial_evidence
+REPLAY-025,Repeated debt-collection calls to mobile,TCPA,FDCPA,True,request_more_evidence,Tier 3,Portfolio Recovery Associates,creditor_or_collector_calls_mobile|mentions_sensitive_identifier|partial_evidence|pattern_bank_hit
+REPLAY-026,Wrong-number prerecorded calls,TCPA,FDCPA,True,request_more_evidence,Tier 3,Receivables Performance Management,opt_out|partial_evidence|pattern_bank_hit|wrong_number
+REPLAY-027,STOP request ignored for marketing texts,TCPA,,False,request_more_evidence,Tier 3,Comenity Bank,opt_out|partial_evidence|pattern_bank_hit|revoked_consent
+REPLAY-028,Collector calls and reports debt to bureaus,TCPA,FDCPA|FCRA,True,request_more_evidence,Tier 3,Midland Credit Management,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-029,Ringless voicemail campaign,TCPA,,False,request_more_evidence,Tier 2,ADT Solar,asks_case_value|partial_evidence
+REPLAY-030,Prospect asks case value during robocall complaint,TCPA,,False,request_more_evidence,Tier 2,SunRun,asks_case_value|partial_evidence
+REPLAY-031,Collector called family member about debt,FDCPA,,False,request_more_evidence,Tier 3,Midland Credit Management,asks_case_value|mentions_sensitive_identifier|partial_evidence|pattern_bank_hit|third_party_contact
+REPLAY-032,Written dispute ignored and collection continued,FDCPA,FCRA,True,request_more_evidence,Tier 3,Resurgent Capital Services,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-033,Threat of arrest over consumer debt,FDCPA,,False,request_more_evidence,Tier 3,National Credit Systems,partial_evidence|pattern_bank_hit
+REPLAY-034,Calls at work after do-not-call notice,FDCPA,,False,request_more_evidence,Tier 2,"Credit Control, LLC",partial_evidence|workplace_calls
+REPLAY-035,Debt not mine and appears on credit report,FDCPA,FCRA,True,request_more_evidence,Tier 3,Portfolio Recovery Associates,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-036,Collector called family member about debt,FDCPA,,False,request_more_evidence,Tier 3,Midland Credit Management,partial_evidence|pattern_bank_hit|third_party_contact
+REPLAY-037,Written dispute ignored and collection continued,FDCPA,FCRA,True,request_more_evidence,Tier 3,Resurgent Capital Services,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-038,Threat of arrest over consumer debt,FDCPA,,False,route_to_attorney,Tier 3,National Credit Systems,asks_case_value|partial_evidence|pattern_bank_hit
+REPLAY-039,Calls at work after do-not-call notice,FDCPA,,False,request_more_evidence,Tier 2,"Credit Control, LLC",mentions_sensitive_identifier|partial_evidence|workplace_calls
+REPLAY-040,Debt not mine and appears on credit report,FDCPA,FCRA,True,request_more_evidence,Tier 3,Portfolio Recovery Associates,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-041,Collector called family member about debt,FDCPA,,False,request_more_evidence,Tier 3,Midland Credit Management,partial_evidence|pattern_bank_hit|third_party_contact
+REPLAY-042,Written dispute ignored and collection continued,FDCPA,FCRA,True,request_more_evidence,Tier 3,Resurgent Capital Services,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-043,Threat of arrest over consumer debt,FDCPA,,False,request_more_evidence,Tier 3,National Credit Systems,partial_evidence|pattern_bank_hit
+REPLAY-044,Calls at work after do-not-call notice,FDCPA,,False,request_more_evidence,Tier 2,"Credit Control, LLC",partial_evidence|workplace_calls
+REPLAY-045,Debt not mine and appears on credit report,FDCPA,FCRA,True,request_more_evidence,Tier 3,Portfolio Recovery Associates,asks_case_value|credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-046,Collector called family member about debt,FDCPA,,False,request_more_evidence,Tier 3,Midland Credit Management,partial_evidence|pattern_bank_hit|third_party_contact
+REPLAY-047,Written dispute ignored and collection continued,FDCPA,FCRA,True,request_more_evidence,Tier 3,Resurgent Capital Services,credit_reporting_overlap|mentions_sensitive_identifier|partial_evidence|pattern_bank_hit
+REPLAY-048,Threat of arrest over consumer debt,FDCPA,,False,request_more_evidence,Tier 3,National Credit Systems,partial_evidence|pattern_bank_hit
+REPLAY-049,Calls at work after do-not-call notice,FDCPA,,False,request_more_evidence,Tier 2,"Credit Control, LLC",partial_evidence|workplace_calls
+REPLAY-050,Debt not mine and appears on credit report,FDCPA,FCRA,True,request_more_evidence,Tier 3,Portfolio Recovery Associates,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-051,Collector called family member about debt,FDCPA,,False,request_more_evidence,Tier 3,Midland Credit Management,partial_evidence|pattern_bank_hit|third_party_contact
+REPLAY-052,Written dispute ignored and collection continued,FDCPA,FCRA,True,request_more_evidence,Tier 3,Resurgent Capital Services,asks_case_value|credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-053,Threat of arrest over consumer debt,FDCPA,,False,request_more_evidence,Tier 3,National Credit Systems,partial_evidence|pattern_bank_hit
+REPLAY-054,Calls at work after do-not-call notice,FDCPA,,False,request_more_evidence,Tier 2,"Credit Control, LLC",partial_evidence|workplace_calls
+REPLAY-055,Debt not mine and appears on credit report,FDCPA,FCRA,True,request_more_evidence,Tier 3,Portfolio Recovery Associates,credit_reporting_overlap|mentions_sensitive_identifier|partial_evidence|pattern_bank_hit
+REPLAY-056,Debt remains after bureau dispute,FCRA,FDCPA,True,request_more_evidence,Tier 3,Experian,asks_case_value|credit_reporting_overlap|mentions_sensitive_identifier|partial_evidence|pattern_bank_hit
+REPLAY-057,Mixed file with another consumer account,FCRA,,False,route_to_attorney,Tier 3,Equifax,partial_evidence|pattern_bank_hit
+REPLAY-058,Re-aged debt reporting,FCRA,FDCPA|TCPA,True,request_more_evidence,Tier 3,Portfolio Recovery Associates,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-059,Bankruptcy discharge still reported as due,FCRA,,False,request_more_evidence,Tier 3,Synchrony Bank,partial_evidence|pattern_bank_hit
+REPLAY-060,Hard inquiry not recognized,FCRA,,False,request_more_evidence,Tier 3,TransUnion,partial_evidence|pattern_bank_hit
+REPLAY-061,Debt remains after bureau dispute,FCRA,FDCPA,True,request_more_evidence,Tier 3,Experian,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-062,Mixed file with another consumer account,FCRA,,False,request_more_evidence,Tier 3,Equifax,partial_evidence|pattern_bank_hit
+REPLAY-063,Re-aged debt reporting,FCRA,FDCPA|TCPA,True,request_more_evidence,Tier 3,Portfolio Recovery Associates,asks_case_value|credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-064,Bankruptcy discharge still reported as due,FCRA,,False,request_more_evidence,Tier 3,Synchrony Bank,mentions_sensitive_identifier|partial_evidence|pattern_bank_hit
+REPLAY-065,Hard inquiry not recognized,FCRA,,False,request_more_evidence,Tier 3,TransUnion,partial_evidence|pattern_bank_hit
+REPLAY-066,Debt remains after bureau dispute,FCRA,FDCPA,True,request_more_evidence,Tier 3,Experian,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-067,Mixed file with another consumer account,FCRA,,False,request_more_evidence,Tier 3,Equifax,partial_evidence|pattern_bank_hit
+REPLAY-068,Re-aged debt reporting,FCRA,FDCPA|TCPA,True,request_more_evidence,Tier 3,Portfolio Recovery Associates,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-069,Bankruptcy discharge still reported as due,FCRA,,False,request_more_evidence,Tier 3,Synchrony Bank,partial_evidence|pattern_bank_hit
+REPLAY-070,Hard inquiry not recognized,FCRA,,False,request_more_evidence,Tier 3,TransUnion,asks_case_value|partial_evidence|pattern_bank_hit
+REPLAY-071,Debt remains after bureau dispute,FCRA,FDCPA,True,request_more_evidence,Tier 3,Experian,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-072,Mixed file with another consumer account,FCRA,,False,request_more_evidence,Tier 3,Equifax,mentions_sensitive_identifier|partial_evidence|pattern_bank_hit
+REPLAY-073,Re-aged debt reporting,FCRA,FDCPA|TCPA,True,request_more_evidence,Tier 3,Portfolio Recovery Associates,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-074,Bankruptcy discharge still reported as due,FCRA,,False,route_to_attorney,Tier 3,Synchrony Bank,partial_evidence|pattern_bank_hit
+REPLAY-075,Hard inquiry not recognized,FCRA,,False,request_more_evidence,Tier 3,TransUnion,partial_evidence|pattern_bank_hit
+REPLAY-076,Debt remains after bureau dispute,FCRA,FDCPA,True,request_more_evidence,Tier 3,Experian,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-077,Mixed file with another consumer account,FCRA,,False,request_more_evidence,Tier 3,Equifax,asks_case_value|partial_evidence|pattern_bank_hit
+REPLAY-078,Re-aged debt reporting,FCRA,FDCPA|TCPA,True,request_more_evidence,Tier 3,Portfolio Recovery Associates,credit_reporting_overlap|partial_evidence|pattern_bank_hit
+REPLAY-079,Bankruptcy discharge still reported as due,FCRA,,False,request_more_evidence,Tier 3,Synchrony Bank,partial_evidence|pattern_bank_hit
+REPLAY-080,Hard inquiry not recognized,FCRA,,False,request_more_evidence,Tier 3,TransUnion,mentions_sensitive_identifier|partial_evidence|pattern_bank_hit
+REPLAY-081,Telecom add-on billing dispute with arbitration clause,MASS_ARB,TCPA,True,request_more_evidence,Tier 3,AT&T Mobility,arbitration_clause|partial_evidence|pattern_bank_hit
+REPLAY-082,Subscription charges after cancellation,MASS_ARB,,False,request_more_evidence,Tier 3,Wells Fargo,arbitration_clause|partial_evidence|pattern_bank_hit
+REPLAY-083,Travel refund denial under arbitration clause,MASS_ARB,,False,request_more_evidence,Tier 2,TravelClub Services,arbitration_clause|partial_evidence
+REPLAY-084,Bank fee dispute with arbitration language,MASS_ARB,,False,request_more_evidence,Tier 2,Bank of America,arbitration_clause|partial_evidence
+REPLAY-085,Telecom add-on billing dispute with arbitration clause,MASS_ARB,TCPA,True,request_more_evidence,Tier 3,AT&T Mobility,arbitration_clause|partial_evidence|pattern_bank_hit
+REPLAY-086,Subscription charges after cancellation,MASS_ARB,,False,request_more_evidence,Tier 3,Wells Fargo,arbitration_clause|partial_evidence|pattern_bank_hit
+REPLAY-087,Travel refund denial under arbitration clause,MASS_ARB,,False,request_more_evidence,Tier 2,TravelClub Services,arbitration_clause|partial_evidence
+REPLAY-088,Bank fee dispute with arbitration language,MASS_ARB,,False,request_more_evidence,Tier 2,Bank of America,arbitration_clause|partial_evidence
+REPLAY-089,Telecom add-on billing dispute with arbitration clause,MASS_ARB,TCPA,True,request_more_evidence,Tier 3,AT&T Mobility,arbitration_clause|partial_evidence|pattern_bank_hit
+REPLAY-090,Subscription charges after cancellation,MASS_ARB,,False,request_more_evidence,Tier 3,Wells Fargo,arbitration_clause|partial_evidence|pattern_bank_hit
+REPLAY-091,Bad appliance purchase only,UNKNOWN_CONSUMER,,False,route_to_intake_review,Tier 1,Big Box Appliance Store,partial_evidence|unknown_consumer
+REPLAY-092,Landlord deposit dispute,WRONG_FIT,,False,wrong_fit_close,Tier 1,Riverstone Apartments,partial_evidence|wrong_fit
+REPLAY-093,Employment pay issue,WRONG_FIT,,False,wrong_fit_close,Tier 1,Local Employer LLC,wrong_fit
+REPLAY-094,Prospect only asks outcome and value,UNKNOWN_CONSUMER,,False,route_to_intake_review,Tier 1,Unknown,asks_case_value|sparse_facts|unknown_consumer
+REPLAY-095,Sensitive identifier included in complaint,UNKNOWN_CONSUMER,,False,route_to_intake_review,Tier 1,Generic Billing Company,mentions_sensitive_identifier|partial_evidence|unknown_consumer
+REPLAY-096,Bad appliance purchase only,UNKNOWN_CONSUMER,,False,route_to_intake_review,Tier 1,Big Box Appliance Store,partial_evidence|unknown_consumer
+REPLAY-097,Landlord deposit dispute,WRONG_FIT,,False,wrong_fit_close,Tier 1,Riverstone Apartments,partial_evidence|wrong_fit
+REPLAY-098,Employment pay issue,WRONG_FIT,,False,wrong_fit_close,Tier 1,Local Employer LLC,wrong_fit
+REPLAY-099,Prospect only asks outcome and value,UNKNOWN_CONSUMER,,False,route_to_intake_review,Tier 1,Unknown,asks_case_value|sparse_facts|unknown_consumer
+REPLAY-100,Sensitive identifier included in complaint,UNKNOWN_CONSUMER,,False,route_to_intake_review,Tier 1,Generic Billing Company,mentions_sensitive_identifier|partial_evidence|unknown_consumer

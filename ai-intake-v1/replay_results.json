@@ -1,0 +1,221 @@
+{
+  "total": 100,
+  "primary_accuracy": 0.78,
+  "cross_flag_accuracy": 0.61,
+  "secondary_exact_accuracy": 0.42,
+  "recommendation_accuracy": 0.75,
+  "request_errors": 0,
+  "failures_sample": [
+    {
+      "case_id": "REPLAY-004",
+      "type": "primary",
+      "expected": "TCPA",
+      "actual": "FCRA",
+      "conversation_id": "85a8d060-086f-4666-a8ba-d1af9c4c9b70"
+    },
+    {
+      "case_id": "REPLAY-004",
+      "type": "secondary",
+      "expected": [
+        "FCRA",
+        "FDCPA"
+      ],
+      "actual": [
+        "FDCPA"
+      ],
+      "conversation_id": "85a8d060-086f-4666-a8ba-d1af9c4c9b70"
+    },
+    {
+      "case_id": "REPLAY-005",
+      "type": "cross_flag",
+      "expected": false,
+      "actual": true,
+      "conversation_id": "0e6c8853-e6bd-4a0b-9cf6-d82a2d9b4b77"
+    },
+    {
+      "case_id": "REPLAY-005",
+      "type": "secondary",
+      "expected": [],
+      "actual": [
+        "FDCPA"
+      ],
+      "conversation_id": "0e6c8853-e6bd-4a0b-9cf6-d82a2d9b4b77"
+    },
+    {
+      "case_id": "REPLAY-006",
+      "type": "cross_flag",
+      "expected": false,
+      "actual": true,
+      "conversation_id": "0e181c03-d02c-4e16-abdb-588c4c2346c8"
+    },
+    {
+      "case_id": "REPLAY-006",
+      "type": "secondary",
+      "expected": [],
+      "actual": [
+        "FDCPA"
+      ],
+      "conversation_id": "0e181c03-d02c-4e16-abdb-588c4c2346c8"
+    },
+    {
+      "case_id": "REPLAY-007",
+      "type": "primary",
+      "expected": "TCPA",
+      "actual": "FDCPA",
+      "conversation_id": "e9f57af2-37b7-4d32-bc51-47e0cc127586"
+    },
+    {
+      "case_id": "REPLAY-007",
+      "type": "secondary",
+      "expected": [
+        "FDCPA"
+      ],
+      "actual": [
+        "TCPA"
+      ],
+      "conversation_id": "e9f57af2-37b7-4d32-bc51-47e0cc127586"
+    },
+    {
+      "case_id": "REPLAY-010",
+      "type": "primary",
+      "expected": "TCPA",
+      "actual": "FCRA",
+      "conversation_id": "47fda434-1402-429d-8467-ed4936ee6bd0"
+    },
+    {
+      "case_id": "REPLAY-010",
+      "type": "secondary",
+      "expected": [
+        "FCRA",
+        "FDCPA"
+      ],
+      "actual": [
+        "FDCPA"
+      ],
+      "conversation_id": "47fda434-1402-429d-8467-ed4936ee6bd0"
+    },
+    {
+      "case_id": "REPLAY-010",
+      "type": "recommendation",
+      "expected": "route_to_attorney",
+      "actual": "request_more_evidence",
+      "conversation_id": "47fda434-1402-429d-8467-ed4936ee6bd0"
+    },
+    {
+      "case_id": "REPLAY-011",
+      "type": "cross_flag",
+      "expected": false,
+      "actual": true,
+      "conversation_id": "0890c056-35eb-4846-82dc-9d914d7ac137"
+    },
+    {
+      "case_id": "REPLAY-011",
+      "type": "secondary",
+      "expected": [],
+      "actual": [
+        "FDCPA"
+      ],
+      "conversation_id": "0890c056-35eb-4846-82dc-9d914d7ac137"
+    },
+    {
+      "case_id": "REPLAY-012",
+      "type": "cross_flag",
+      "expected": false,
+      "actual": true,
+      "conversation_id": "1417a6ad-bd45-4811-bea5-da987416a8ce"
+    },
+    {
+      "case_id": "REPLAY-012",
+      "type": "secondary",
+      "expected": [],
+      "actual": [
+        "FDCPA"
+      ],
+      "conversation_id": "1417a6ad-bd45-4811-bea5-da987416a8ce"
+    },
+    {
+      "case_id": "REPLAY-013",
+      "type": "primary",
+      "expected": "TCPA",
+      "actual": "FDCPA",
+      "conversation_id": "10cb2b8f-1200-4814-bfe5-a4b0e0c6c650"
+    },
+    {
+      "case_id": "REPLAY-013",
+      "type": "secondary",
+      "expected": [
+        "FDCPA"
+      ],
+      "actual": [
+        "TCPA"
+      ],
+      "conversation_id": "10cb2b8f-1200-4814-bfe5-a4b0e0c6c650"
+    },
+    {
+      "case_id": "REPLAY-016",
+      "type": "primary",
+      "expected": "TCPA",
+      "actual": "FCRA",
+      "conversation_id": "1c42cbbd-7199-4e5b-8bb9-44f52fea5f63"
+    },
+    {
+      "case_id": "REPLAY-016",
+      "type": "secondary",
+      "expected": [
+        "FCRA",
+        "FDCPA"
+      ],
+      "actual": [
+        "FDCPA",
+        "TCPA"
+      ],
+      "conversation_id": "1c42cbbd-7199-4e5b-8bb9-44f52fea5f63"
+    },
+    {
+      "case_id": "REPLAY-016",
+      "type": "recommendation",
+      "expected": "request_more_evidence",
+      "actual": "route_to_attorney",
+      "conversation_id": "1c42cbbd-7199-4e5b-8bb9-44f52fea5f63"
+    },
+    {
+      "case_id": "REPLAY-017",
+      "type": "cross_flag",
+      "expected": false,
+      "actual": true,
+      "conversation_id": "37dfdcdd-d36c-414f-b3f7-ef7f59b8d7b9"
+    },
+    {
+      "case_id": "REPLAY-017",
+      "type": "secondary",
+      "expected": [],
+      "actual": [
+        "FDCPA"
+      ],
+      "conversation_id": "37dfdcdd-d36c-414f-b3f7-ef7f59b8d7b9"
+    },
+    {
+      "case_id": "REPLAY-018",
+      "type": "cross_flag",
+      "expected": false,
+      "actual": true,
+      "conversation_id": "6213a867-19fd-404b-80ea-8d0d64f03a3c"
+    },
+    {
+      "case_id": "REPLAY-018",
+      "type": "secondary",
+      "expected": [],
+      "actual": [
+        "FDCPA"
+      ],
+      "conversation_id": "6213a867-19fd-404b-80ea-8d0d64f03a3c"
+    },
+    {
+      "case_id": "REPLAY-019",
+      "type": "primary",
+      "expected": "TCPA",
+      "actual": "FDCPA",
+      "conversation_id": "9fc9fd37-0d7d-4aa6-9e9b-75ac1d67c6f8"
+    }
+  ]
+}
